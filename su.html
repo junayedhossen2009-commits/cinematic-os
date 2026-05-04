@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultimate Productivity OS</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#0B0F1A;
+  --card:rgba(255,255,255,0.06);
+  --accent:#4cc9f0;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:Inter;}
+
+body{
+  background: radial-gradient(circle at top,#1E1B4B,#0B0F1A);
+  color:#fff;
+}
+
+/* OPENING */
+#opening{
+  position:fixed;inset:0;background:black;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  z-index:999;
+}
+#opening h1{opacity:0;animation:fade 5s forwards;font-family:Playfair Display;}
+@keyframes fade{0%{opacity:0;filter:blur(10px)}100%{opacity:1}}
+#enterBtn{margin-top:20px;padding:12px 30px;border-radius:30px;border:1px solid var(--accent);background:transparent;color:white;display:none}
+
+/* APP */
+#app{display:none;padding:20px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:15px;}
+.card{
+  background:var(--card);
+  padding:20px;border-radius:15px;
+  backdrop-filter:blur(12px);
+  cursor:pointer;
+  transition:.3s;
+}
+.card:hover{transform:translateY(-5px);box-shadow:0 0 20px var(--accent);}
+
+/* TABLE */
+table{width:100%;margin-top:20px;}
+td,th{padding:10px;border-bottom:1px solid rgba(255,255,255,0.1);}
+input{background:transparent;border:none;color:white;outline:none;}
+.done{text-decoration:line-through;opacity:.5}
+
+/* BUTTON */
+button{padding:8px 12px;border:none;border-radius:8px;background:var(--accent);cursor:pointer}
+
+/* TIMER */
+#timer{font-size:40px;text-align:center;margin-top:20px}
+
+/* ANALYTICS */
+.bar{height:10px;background:green;margin-top:5px}
+
+/* HEATMAP */
+.heat{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:15px}
+.box{height:20px;background:#222}
+.active{background:lime}
+
+/* FOCUS */
+#focus{display:none;position:fixed;inset:0;background:black;color:white;align-items:center;justify-content:center;flex-direction:column}
+</style>
+</head>
+
+<body>
+
+<div id="opening">
+<h1>Design Your Time. Control Your Life.</h1>
+<button id="enterBtn">Enter</button>
+</div>
+
+<div id="app">
+
+<h1>Productivity OS</h1>
+<div id="streak">🔥 Streak: 0</div>
+
+<div class="grid">
+<div class="card" onclick="show('tasks')">📅 Tasks</div>
+<div class="card" onclick="show('timerBox')">⏱ Timer</div>
+<div class="card" onclick="show('analytics')">📊 Analytics</div>
+<div class="card" onclick="show('heatmap')">📈 Heatmap</div>
+<div class="card" onclick="openFocus()">🎯 Focus</div>
+</div>
+
+<!-- TASK -->
+<div id="tasks" style="display:none">
+<button onclick="addTask()">+ Task</button>
+<table id="table">
+<tr><th>No</th><th>Task</th><th>✔</th><th>❌</th></tr>
+</table>
+</div>
+
+<!-- TIMER -->
+<div id="timerBox" style="display:none">
+<div id="timer">25:00</div>
+<button onclick="startTimer()">Start</button>
+</div>
+
+<!-- ANALYTICS -->
+<div id="analytics" style="display:none">
+<h3>Completion</h3>
+<div id="bar" class="bar"></div>
+</div>
+
+<!-- HEATMAP -->
+<div id="heatmap" style="display:none">
+<div class="heat" id="heat"></div>
+</div>
+
+</div>
+
+<div id="focus">
+<h1>Focus Mode</h1>
+<button onclick="closeFocus()">Exit</button>
+</div>
+
+<script>
+
+/* OPEN */
+setTimeout(()=>enterBtn.style.display='block',5000);
+enterBtn.onclick=()=>{opening.style.display='none';app.style.display='block';}
+
+/* NAV */
+function show(id){
+document.querySelectorAll('#tasks,#timerBox,#analytics,#heatmap').forEach(e=>e.style.display='none');
+document.getElementById(id).style.display='block';
+}
+
+/* TASK */
+let count=0;
+function addTask(){
+count++;
+let r=table.insertRow();
+r.innerHTML=`<td>${count}</td>
+<td><input></td>
+<td><input type="checkbox" onchange="done(this)"></td>
+<td><button onclick="del(this)">X</button></td>`;
+save();
+}
+function done(cb){
+cb.parentElement.parentElement.classList.toggle('done');
+update();save();
+}
+function del(btn){
+btn.parentElement.parentElement.remove();
+update();save();
+}
+
+/* TIMER */
+let t=1500,int;
+function startTimer(){
+clearInterval(int);
+int=setInterval(()=>{
+if(t<=0){clearInterval(int);alert("Done");return;}
+t--;let m=Math.floor(t/60),s=t%60;
+timer.innerText=`${m}:${s<10?'0'+s:s}`;
+},1000);
+}
+
+/* ANALYTICS */
+function update(){
+let total=document.querySelectorAll('#table tr').length-1;
+let doneC=document.querySelectorAll('.done').length;
+let per= total? (doneC/total)*100:0;
+bar.style.width=per+"%";
+localStorage.setItem("streak",doneC);
+streak.innerText="🔥 Streak: "+doneC;
+}
+
+/* HEATMAP */
+for(let i=0;i<28;i++){
+let b=document.createElement('div');
+b.className='box';
+if(Math.random()>0.7)b.classList.add('active');
+heat.appendChild(b);
+}
+
+/* STORAGE */
+function save(){localStorage.setItem("data",table.innerHTML);}
+if(localStorage.getItem("data"))table.innerHTML=localStorage.getItem("data");
+
+/* FOCUS */
+function openFocus(){focus.style.display='flex';}
+function closeFocus(){focus.style.display='none';}
+
+/* LOAD */
+streak.innerText="🔥 Streak: "+(localStorage.getItem("streak")||0);
+update();
+
+</script>
+
+</body>
+</html>
